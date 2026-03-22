@@ -1,35 +1,35 @@
 /* Theme */
 :root {
   /* Primary */
-  --primary: 200 29% 45%;
+  --primary: 198 52% 42%;
   /* Foreground */
-  --foreground: 240 10% 3.9%;
-  --muted-foreground: 240 3.8% 28.1%;
+  --foreground: 224 18% 11%;
+  --muted-foreground: 224 10% 33%;
   /* Background */
-  --background: 210 33% 99%;
-  --muted: 240 4.8% 96%;
-  --card: 0 0% 90%;
+  --background: 210 30% 99%;
+  --muted: 210 20% 96%;
+  --card: 210 18% 91%;
 
   /* Basic */
-  --border: 240 5.9% 88%;
-  --input: 240 5.9% 90%;
+  --border: 215 16% 84%;
+  --input: 215 16% 88%;
   --ring: 240 5.9% 10%;
   --radius: 0.5rem;
 }
 .dark {
   /* Primary */
-  --primary: 195 95% 85%;
+  --primary: 198 78% 72%;
   /* Foreground */
   --foreground: 0 0% 98%;
-  --muted-foreground: 240 5% 74.9%;
+  --muted-foreground: 220 8% 76%;
   /* Background */
-  --background: 240 20.54% 5.2%;
-  --muted: 240 5.9% 13%;
-  --card: 240 3.7% 24.9%;
+  --background: 224 28% 7%;
+  --muted: 224 12% 14%;
+  --card: 224 10% 22%;
 
   /* Basic */
-  --border: 240 3.7% 22.9%;
-  --input: 240 3.7% 17.9%;
+  --border: 224 9% 25%;
+  --input: 224 9% 18%;
   --ring: 240 4.9% 83.9%;
 }
 :root {

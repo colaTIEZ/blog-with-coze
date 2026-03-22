@@ -11,11 +11,11 @@ import Section from '@/components/home/Section.astro'
 import SkillLayout from '@/components/home/SkillLayout.astro'
 import config from '@/site-config'
 
-const languages = ['Html', 'JavaScript', 'CSS', 'Shell']
-const frontend = ['TypeScript', 'Vite', 'Webpack', 'Astro']
-const backend = ['Vercel', 'Waline']
+const languages = ['TypeScript', 'JavaScript', 'HTML', 'CSS', 'Shell']
+const frontend = ['Astro', 'Vue', 'React', 'UnoCSS', 'Vite']
+const backend = ['Node.js', 'Supabase', 'Vercel', 'Waline']
 
-const MAX_POSTS = 10
+const MAX_POSTS = 8
 const allPosts = await getBlogCollection()
 const allPostsByDate = sortMDByDate(allPosts).slice(0, MAX_POSTS)
 
@@ -43,13 +43,13 @@ if (!images[imagePath])
       <div class='flex flex-col items-center gap-y-4'>
         <h1 class='text-3xl font-medium'>{config.author}</h1>
         <div class='flex flex-wrap justify-center gap-x-7 gap-y-3'>
-          <Label title='Somewhere'>
+          <Label title='异次元'>
             <Icon name='location' class='size-5' slot='icon' />
           </Label>
           <Label
             title='Source code'
             as='a'
-            href='https://github.com/cworld1/astro-theme-pure'
+            href='https://github.com/colaTIEZ'
             target='_blank'
           >
             <Icon name='github' class='size-5' slot='icon' />
@@ -57,9 +57,9 @@ if (!images[imagePath])
         </div>
       </div>
 
-      {/* Get template */}
+      {/* View repository */}
       <a
-        href='https://github.com/cworld1/astro-theme-pure'
+        href='https://github.com/colaTIEZ'
         target='_blank'
         class='flex flex-row items-center gap-x-3 rounded-full border bg-background px-4 py-2 text-sm shadow-sm transition-shadow hover:shadow-md'
       >
@@ -69,17 +69,16 @@ if (!images[imagePath])
           ></span>
           <span class='size-2 rounded-full bg-green-400'></span>
         </span>
-        <p class='font-medium text-muted-foreground'>Get Template</p>
+        <p class='font-medium text-muted-foreground'>View Repository</p>
       </a>
     </section>
 
     <div id='content' class='animate flex flex-col gap-y-10 md:w-4/5 lg:w-5/6'>
       <Section title='About'>
-        <p class='text-muted-foreground'>Developer / Designer</p>
+        <p class='text-muted-foreground'>Developer / Creator</p>
         <p class='text-muted-foreground'>
-          Lorem ipsum dolor sit amet, vidit suscipit at mei. Quem denique mea id. Usu ei regione
-          indoctum dissentiunt, cu meliore fuisset mei, vel quod voluptua ne. Ex dicat impedit mel,
-          at eum oratio possit voluptatum.
+          这里是 Jins 的数字花园，主要记录开发、工程实践和学习笔记。
+          我喜欢把复杂问题拆成可复用的小模块，也会分享一些真实项目中的踩坑与复盘。
         </p>
         <Button title='More about me' class='w-fit self-end' href='/about' variant='ahead' />
       </Section>
@@ -130,10 +129,10 @@ if (!images[imagePath])
       <Section title='Education'>
         <Card
           as='a'
-          heading='Lorem ipsum'
-          subheading='Lorem ipsum dolor sit amet, vidit suscipit at mei.'
-          date='August 2021 - July 2025'
-          href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+          heading='计算机相关学习路径'
+          subheading='持续学习 Web 开发、工程化与产品设计思维。'
+          date='2026 - 至今'
+          href='/about'
         >
           {
             /* <ul class='ms-4 list-disc text-muted-foreground'>
@@ -150,21 +149,21 @@ if (!images[imagePath])
       <Section title='Website List'>
         <div class='grid grid-cols-1 gap-3 sm:grid-cols-2'>
           <ProjectCard
-            href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-            heading='Lorem ipsum'
-            subheading='Do not go gentle into that good night'
+            href='/blog'
+            heading='技术博客'
+            subheading='记录开发过程中的思考、总结和实践经验'
             imagePath='/src/assets/projects/1.avif'
           />
           <ProjectCard
-            href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-            heading='Lorem ipsum'
-            subheading='Old age burn and rave at close of day'
+            href='/docs'
+            heading='知识文档'
+            subheading='沉淀可复用的方法、配置与最佳实践'
             imagePath='/src/assets/projects/2.avif'
           />
           <ProjectCard
-            href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-            heading='Lorem ipsum'
-            subheading='Rage, rage against the dying of the light'
+            href='/projects'
+            heading='项目作品'
+            subheading='从想法到上线，展示完整项目经历'
             imagePath='/src/assets/projects/3.avif'
           />
           <ProjectCard
@@ -179,10 +178,10 @@ if (!images[imagePath])
       <Section title='Certifications'>
         <Card
           as='a'
-          heading='Lorem ipsum'
-          subheading='Lorem ipsum dolor sit amet, vidit suscipit at mei. Quem denique mea id. Usu ei regione indoctum dissentiunt, cu meliore fuisset mei, vel quod voluptua ne. Ex dicat impedit mel, at eum oratio possit voluptatum. Dicat ceteros cu vim. Impetus fuisset ullamcorper pri cu, his posse iisque ad, aliquam honestatis usu id.'
-          date='July 2024'
-          href='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+          heading='当前关注'
+          subheading='Web 性能优化、可维护前端架构、AI 辅助开发工作流。'
+          date='2026'
+          href='/about#tools'
         />
       </Section>
 
