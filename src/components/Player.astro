@@ -1,0 +1,222 @@
+---
+// src/components/Player.astro
+---
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
+
+<div id="aplayer"></div>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script>
+
+<script is:inline>
+
+  // 使用 is:inline 确保脚本在客户端执行
+  const ap = new APlayer({
+    container: document.getElementById('aplayer'),
+    fixed: true,          // 吸附模式
+    autoplay: false,      // 是否自动播放
+    theme: '#659EB9',     // 主题色
+    loop: 'all',          // 循环模式
+    order: 'list',        // 播放顺序
+    preload: 'auto',      // 预加载
+    volume: 0.7,          // 默认音量
+    audio: [
+      {
+        name: 'Faded Light',
+        artist: 'PYLOT',
+        url: '/music/PYLOT - Faded Light.flac',      // 对应 public/music/song1.mp3
+        cover: '/music/cover1.jpg',   // 对应 public/music/cover1.jpg
+        lrc: ''                       // 如果有歌词文件也可以加上
+      }// 添加更多歌曲
+    ]
+  });
+</script>
+
+
+<style is:global>
+  :root {
+    /* 定义一些颜色变量，方便适配主题 */
+    --aplayer-theme-color: #659EB9; 
+    --aplayer-bg-color: rgba(255, 255, 255, 0.85); 
+    --aplayer-text-color: #333;
+    --aplayer-list-hover-bg: rgba(0, 0, 0, 0.05);
+  }
+
+  /* ==============================
+     1. 播放器外部容器及状态控制 (修正)
+     ============================== */
+  .aplayer.aplayer-fixed {
+    z-index: 9999 !important; 
+    bottom: 25px !important; 
+    left: auto !important; 
+    right: 25px !important; 
+    width: 300px !important; /* 默认设为展开时的宽度 */
+    border-radius: 12px !important; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; 
+    backdrop-filter: blur(10px); 
+    overflow: hidden; 
+    transition: all 0.3s ease !important; 
+  }
+
+  /* 真正的收起状态 (APlayer 会自动加上 aplayer-narrow 类) */
+  .aplayer.aplayer-fixed.aplayer-narrow {
+    width: 60px !important; /* 收缩时只剩下封面的宽度 */
+    border-radius: 50% !important; /* 强制变成圆形 */
+  }
+
+  /* ==============================
+     2. 内部布局翻转 (解决向右重叠溢出的核心)
+     ============================== */
+  /* 使用 flex 并左右翻转：封面在右，信息栏自然向左延展 */
+  .aplayer.aplayer-fixed .aplayer-body {
+    display: flex !important;
+    flex-direction: row-reverse !important; 
+    background: var(--aplayer-bg-color) !important;
+    width: 100% !important;
+  }
+
+  /* 封面保持圆形不变 */
+  .aplayer.aplayer-fixed .aplayer-pic {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0; /* 防止被挤压 */
+  }
+
+  /* 修正播放/暂停按钮的位置 */
+  .aplayer.aplayer-fixed .aplayer-pic .aplayer-button {
+    bottom: 50% !important;
+    right: 50% !important;
+    transform: translate(50%, 50%) !important; 
+    width: 26px !important;
+    height: 26px !important;
+    opacity: 0.8;
+  }
+
+  /* ==============================
+     3. 歌名/进度条区域样式
+     ============================== */
+  .aplayer.aplayer-fixed .aplayer-info {
+    flex: 1; /* 撑满左侧多出来的空间 */
+    margin: 0 !important; /* 移除原版为左侧展开留的边距 */
+    padding: 10px 15px !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 在收起状态下，隐藏文字和工具栏 */
+  .aplayer.aplayer-fixed.aplayer-narrow .aplayer-info {
+    display: none !important;
+  }
+
+  .aplayer .aplayer-info .aplayer-music {
+    margin: 0 0 8px 0 !important;
+  }
+
+  .aplayer .aplayer-info .aplayer-music .aplayer-title {
+    font-size: 14px !important;
+    font-weight: bold !important;
+    color: var(--aplayer-text-color) !important;
+  }
+
+  .aplayer .aplayer-info .aplayer-controller .aplayer-bar-wrap .aplayer-bar {
+    height: 4px !important;
+    border-radius: 2px !important;
+  }
+
+  /* ==============================
+     4. 展开开关 (小箭头) 位置修正
+     ============================== */
+  /* 原版的开关在右侧，此时在右下角会被挤出屏幕。将其移到最左侧 */
+  .aplayer.aplayer-fixed .aplayer-miniswitch {
+    right: auto !important;
+    left: 0 !important;
+    background: rgba(30, 112, 145, 0.1) !important;
+    border-radius: 12px 0 0 12px !important;
+  }
+
+  .aplayer.aplayer-fixed.aplayer-narrow .aplayer-miniswitch {
+    border-radius: 50px 0 0 50px !important;
+    width: 18px !important;
+  }
+
+  /* 翻转箭头的方向以符合左侧开关的视觉直觉 */
+  .aplayer.aplayer-fixed .aplayer-miniswitch .aplayer-icon {
+    transform: rotateY(180deg) !important;
+  }
+  .aplayer.aplayer-fixed.aplayer-narrow .aplayer-miniswitch .aplayer-icon {
+    transform: rotateY(0deg) !important;
+  }
+
+  /* ==============================
+     5. 播放列表及其他样式 
+     ============================== */
+  .aplayer .aplayer-list {
+    max-height: 200px !important; 
+    border-radius: 0 0 12px 12px !important; 
+    background: var(--aplayer-bg-color) !important;
+  }
+
+  .aplayer .aplayer-listol {
+    padding: 5px 0 !important;
+  }
+
+  .aplayer .aplayer-list li {
+    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+    padding: 10px 15px !important;
+    transition: background 0.2s;
+  }
+
+  .aplayer .aplayer-list li:hover {
+    background: var(--aplayer-list-hover-bg) !important;
+  }
+
+  .aplayer .aplayer-list li.aplayer-list-light {
+    background: rgba(101, 158, 185, 0.1) !important; 
+  }
+
+  .aplayer .aplayer-list li.aplayer-list-light .aplayer-list-cur {
+    display: none !important; 
+  }
+
+  .aplayer .aplayer-list li .aplayer-list-index {
+    color: #999 !important;
+    margin-right: 8px !important;
+  }
+
+  .aplayer .aplayer-list li .aplayer-list-title {
+    color: var(--aplayer-text-color) !important;
+  }
+
+  /* ==============================
+     6. 歌词与暗色模式适配 
+     ============================== */
+  html.dark :root {
+    --aplayer-bg-color: rgba(30, 30, 30, 0.85);
+    --aplayer-text-color: #eee;
+    --aplayer-list-hover-bg: rgba(255, 255, 255, 0.05);
+  }
+
+  .aplayer.aplayer-fixed .aplayer-lrc {
+    bottom: 80px !important; 
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important; 
+  }
+
+  .aplayer .aplayer-lrc:before,
+  .aplayer .aplayer-lrc:after {
+    display: none !important; 
+  }
+
+  .aplayer .aplayer-lrc p {
+    font-size: 15px !important; 
+    color: #888 !important; 
+    line-height: 2 !important; 
+    transition: all 0.3s ease !important; 
+  }
+
+  .aplayer .aplayer-lrc p.aplayer-lrc-current {
+    font-size: 18px !important; 
+    color: var(--aplayer-theme-color) !important; 
+    font-weight: bold !important;
+    letter-spacing: 1px !important; 
+  } /* <-- 帮你补上了原代码缺失的闭合大括号 */
+</style>

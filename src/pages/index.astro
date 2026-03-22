@@ -1,7 +1,5 @@
 ---
 import { Image } from 'astro:assets'
-
-import { Quote } from 'astro-pure/advanced'
 import { PostPreview } from 'astro-pure/components/pages'
 import { getBlogCollection, sortMDByDate } from 'astro-pure/server'
 import { Button, Card, Icon, Label } from 'astro-pure/user'
@@ -10,6 +8,8 @@ import ProjectCard from '@/components/home/ProjectCard.astro'
 import Section from '@/components/home/Section.astro'
 import SkillLayout from '@/components/home/SkillLayout.astro'
 import config from '@/site-config'
+import Player from '@/components/Player.astro'
+import { Quote } from 'astro-pure/advanced'
 
 const languages = ['TypeScript', 'JavaScript', 'HTML', 'CSS', 'Shell']
 const frontend = ['Astro', 'Vue', 'React', 'UnoCSS', 'Vite']

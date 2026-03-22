@@ -1,5 +1,7 @@
 ---
 import { Footer, Header, ThemeProvider } from 'astro-pure/components/basic'
+import Player from '@/components/Player.astro'
+import { ViewTransitions } from 'astro:transitions';
 import type { SiteMeta } from 'astro-pure/types'
 import BaseHead from '@/components/BaseHead.astro'
 import config from '@/site-config'
@@ -46,6 +48,10 @@ const {
         <slot />
       </div>
       <Footer />
+    </div>
+
+    <div id="music-player-container" transition:persist>
+      <Player id="17849364101" />
     </div>
 
     {/* Set highlight color */}
