@@ -267,9 +267,85 @@ span.katex-display {
   }
 }
 
-/* Scroll bar */
-:root {
-  --scrollbar-thumb: hsl(var(--muted-foreground) / var(--un-bg-opacity, 0.3));
+/* 📖 文章主体基础设定 */
+.prose {
+  color: hsl(var(--foreground));
+  /* 1.8倍行高：长文阅读的最舒适区间，带来极佳的呼吸感 */
+  line-height: 1.8;
+  /* 稍微放大字号，减轻屏幕阅读疲劳 */
+  font-size: 1.125rem; 
+  /* 正文使用现代的无衬线字体 */
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  /* 65ch 是人眼扫视的最佳单行字符长度，避免频繁转头 */
+  max-width: 65ch; 
+  margin: 0 auto;
+  letter-spacing: 0.015em;
+}
+/* 🎯 标题设计：字重分明，使用更具现代感的字体 */
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: hsl(var(--foreground)); /* 移除写死深色，适配深色模式 */
+  font-family: 'Outfit', 'Montserrat', 'PingFang SC', sans-serif;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2.2em;
+  margin-bottom: 0.8em;
+}
+.prose h1 { 
+  font-size: 2.25rem; 
+  letter-spacing: -0.02em; 
+}
+.prose h2 { 
+  font-size: 1.75rem; 
+  /* 底部增加极细的分割线，让长文结构更清晰 */
+  border-bottom: 2px solid hsl(var(--border) / 1); 
+  padding-bottom: 0.3em; 
+}
+/* 📝 段落间距 */
+.prose p {
+  margin-top: 0;
+  margin-bottom: 1.5em;
+}
+/* 💡 引用块 (Blockquote) 深度优化：左侧边框与柔和背景 */
+.prose blockquote {
+  margin: 2em 0;
+  padding: 1.25em 1.5em;
+  background-color: hsl(var(--card));
+  /* 左侧使用无垠海蓝作为独特边框 */
+  border-left: 4px solid hsl(var(--primary)); 
+  /* 右侧增加圆角，打破传统的僵硬感 */
+  border-radius: 0 8px 8px 0; 
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+  position: relative;
+}
+.prose blockquote p:last-child {
+  margin-bottom: 0;
+}
+/* 🔗 链接互动设计：引入热血动漫的强调色 */
+.prose a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+.prose a:hover {
+  /* Hover 时触发破晓赤炎色，带来热血的视觉反馈 */
+  color: hsl(var(--accent)); 
+  border-bottom-color: hsl(var(--accent));
+}
+/* 💻 行内代码设计 */
+.prose code {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  background-color: hsl(var(--muted));
+  /* 代码字符使用强调色，像游戏中跳出的关键道具提示 */
+  color: hsl(var(--accent)); 
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+.prose pre {
+  border-radius: 12px; /* 代码块使用更大的圆角，显得更 Modern */
 }
 :not(html) {
   & ::-webkit-scrollbar {
