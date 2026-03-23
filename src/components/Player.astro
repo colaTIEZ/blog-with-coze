@@ -1,222 +1,608 @@
 ---
 // src/components/Player.astro
 ---
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
 
-<div id="aplayer"></div>
+<elegant-player transition:persist="music-player-component" class="elegant-player-container">
+  <div id="music-player" class="collapsed">
+    <!-- 音乐标签预加载 -->
+    <audio id="audio-element" preload="metadata"></audio>
 
-<script is:inline src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script>
+    <div class="player-inner">
+      <!-- 封面 / 展开开关 -->
+      <div id="cover-container" class="cover-wrapper" title="展开/收起播放器">
+        <div id="vinyl-record" class="vinyl-record">
+          <!-- 封面图由 JS 动态注入 -->
+          <img id="track-cover" src="" alt="Cover" class="cover-image" />
+          <div class="vinyl-hole"></div>
+        </div>
+      </div>
 
-<script is:inline>
+      <!-- 歌曲信息 & 滑动进度条 -->
+      <div class="track-info-wrapper">
+        <div id="track-title" class="song-title">Loading...</div>
+        <div id="track-artist" class="artist-name">Loading...</div>
+        <!-- 进度条外层增加 padding 扩大点击区域 -->
+        <div id="progress-hitbox" class="progress-hitbox">
+          <div id="progress-container" class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+        </div>
+      </div>
 
-  // 使用 is:inline 确保脚本在客户端执行
-  const ap = new APlayer({
-    container: document.getElementById('aplayer'),
-    fixed: true,          // 吸附模式
-    autoplay: false,      // 是否自动播放
-    theme: '#659EB9',     // 主题色
-    loop: 'all',          // 循环模式
-    order: 'list',        // 播放顺序
-    preload: 'auto',      // 预加载
-    volume: 0.7,          // 默认音量
-    audio: [
-      {
-        name: 'Faded Light',
-        artist: 'PYLOT',
-        url: '/music/PYLOT - Faded Light.flac',      // 对应 public/music/song1.mp3
-        cover: '/music/cover1.jpg',   // 对应 public/music/cover1.jpg
-        lrc: ''                       // 如果有歌词文件也可以加上
-      }// 添加更多歌曲
-    ]
-  });
+      <!-- 控制器 -->
+      <div class="controls-wrapper">
+        <!-- 音量控制 -->
+        <div class="volume-group" title="音量调节">
+          <button id="mute-btn" class="ctrl-btn icon-small" aria-label="Mute">
+            <svg id="vol-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <svg id="vol-icon-off" viewBox="0 0 24 24" style="display: none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+          </button>
+          <div class="volume-slider-wrapper">
+            <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.01" value="1" />
+          </div>
+        </div>
+
+        <!-- 上一首 -->
+        <button id="prev-btn" class="ctrl-btn icon-small" aria-label="Previous">
+          <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+        </button>
+        
+        <!-- 播放/暂停 -->
+        <button id="play-pause-btn" class="play-pause-btn" aria-label="Play or Pause">
+          <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pause-icon" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+
+        <!-- 下一首 -->
+        <button id="next-btn" class="ctrl-btn icon-small" aria-label="Next">
+          <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</elegant-player>
+
+<script>
+  // 你可以在此处配置你的播放列表
+  const PLAYLIST = [
+    {
+      title: "Lofi Study",
+      artist: "FASSounds",
+      cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=200&auto=format&fit=crop",
+      src: "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3"
+    },
+    {
+      title: "Faded Light",
+      artist: "PYLOT",
+      cover: "/music/fadedlight-smaller_1.jpg",
+      src: "/music/PYLOT - Faded Light.flac"
+    }
+  ];
+
+  class ElegantPlayer extends HTMLElement {
+    private currentTrackIndex = 0;
+
+    connectedCallback() {
+      if (this.dataset.initialized === 'true') return;
+      this.dataset.initialized = 'true';
+
+      const player = this.querySelector('#music-player');
+      const coverContainer = this.querySelector('#cover-container');
+      const vinylRecord = this.querySelector('#vinyl-record');
+      const playBtn = this.querySelector('#play-pause-btn');
+      const audio = this.querySelector('#audio-element') as HTMLAudioElement;
+      
+      const prevBtn = this.querySelector('#prev-btn');
+      const nextBtn = this.querySelector('#next-btn');
+      const muteBtn = this.querySelector('#mute-btn');
+      const volSlider = this.querySelector('#volume-slider') as HTMLInputElement;
+      
+      const progressHitbox = this.querySelector('#progress-hitbox');
+      const progressContainer = this.querySelector('#progress-container');
+      const progressBar = this.querySelector('#progress-bar') as HTMLElement;
+      
+      const playIcon = this.querySelector('#play-icon') as HTMLElement;
+      const pauseIcon = this.querySelector('#pause-icon') as HTMLElement;
+      const volIconOn = this.querySelector('#vol-icon-on') as HTMLElement;
+      const volIconOff = this.querySelector('#vol-icon-off') as HTMLElement;
+
+      const titleEl = this.querySelector('#track-title') as HTMLElement;
+      const artistEl = this.querySelector('#track-artist') as HTMLElement;
+      const coverEl = this.querySelector('#track-cover') as HTMLImageElement;
+
+      let isExpanded = false;
+      let lastVolume = 1;
+
+      // 加载歌曲
+      const loadTrack = (index: number) => {
+        const track = PLAYLIST[index];
+        titleEl.textContent = track.title;
+        artistEl.textContent = track.artist;
+        coverEl.src = track.cover;
+        audio.src = track.src;
+        progressBar.style.width = '0%';
+      };
+
+      // 展开/收起
+      coverContainer?.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        if (isExpanded) {
+          player?.classList.remove('collapsed');
+          player?.classList.add('expanded');
+        } else {
+          player?.classList.add('collapsed');
+          player?.classList.remove('expanded');
+        }
+      });
+
+      // 初始化第一首歌
+      loadTrack(this.currentTrackIndex);
+      audio.volume = lastVolume;
+
+      // 播放/暂停
+      playBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (audio.paused) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      });
+
+      // 上一首
+      prevBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.currentTrackIndex = (this.currentTrackIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+        loadTrack(this.currentTrackIndex);
+        audio.play();
+      });
+
+      // 下一首 (及自动连播)
+      const playNext = () => {
+        this.currentTrackIndex = (this.currentTrackIndex + 1) % PLAYLIST.length;
+        loadTrack(this.currentTrackIndex);
+        audio.play();
+      };
+
+      nextBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playNext();
+      });
+
+      audio.addEventListener('ended', playNext);
+
+      // 音量控制及静音
+      muteBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (audio.volume > 0) {
+          lastVolume = audio.volume;
+          audio.volume = 0;
+          volSlider.value = '0';
+        } else {
+          audio.volume = lastVolume > 0 ? lastVolume : 1;
+          volSlider.value = audio.volume.toString();
+        }
+        updateVolUI();
+      });
+
+      volSlider?.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const v = parseFloat((e.target as HTMLInputElement).value);
+        audio.volume = v;
+        if (v > 0) lastVolume = v;
+        updateVolUI();
+      });
+
+      const updateVolUI = () => {
+        if (audio.volume === 0) {
+          volIconOn.style.display = 'none';
+          volIconOff.style.display = 'block';
+        } else {
+          volIconOn.style.display = 'block';
+          volIconOff.style.display = 'none';
+        }
+      };
+
+      // 状态同步更新
+      audio.addEventListener('play', () => {
+        if (vinylRecord) (vinylRecord as HTMLElement).style.animationPlayState = 'running';
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+      });
+
+      audio.addEventListener('pause', () => {
+        if (vinylRecord) (vinylRecord as HTMLElement).style.animationPlayState = 'paused';
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+      });
+
+      audio.addEventListener('timeupdate', () => {
+        if (!audio.duration) return;
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = `${percent}%`;
+      });
+
+      // === 修复点击进度条未响应问题 ===
+      // 使用更外围带有 padding 的 hitbox 容器来响应点击，获取更精确和无阻挡的坐标
+      progressHitbox?.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止冒泡
+        if (!audio.duration) return; 
+        
+        const rect = progressContainer!.getBoundingClientRect();
+        // 计算点击位置相对于真实进度条容器左侧的距离
+        // 使用 Math.max 和 Math.min 限制在 0-1 之间
+        let pos = ((e as MouseEvent).clientX - rect.left) / rect.width;
+        pos = Math.max(0, Math.min(1, pos));
+        
+        audio.currentTime = pos * audio.duration;
+      });
+      
+      // 防止误触面板影响折叠状态
+      const trackInfo = this.querySelector('.track-info-wrapper');
+      trackInfo?.addEventListener('click', (e) => e.stopPropagation());
+      const controlsWrap = this.querySelector('.controls-wrapper');
+      controlsWrap?.addEventListener('click', (e) => e.stopPropagation());
+    }
+  }
+
+  customElements.define('elegant-player', ElegantPlayer);
 </script>
 
-
-<style is:global>
-  :root {
-    /* 定义一些颜色变量，方便适配主题 */
-    --aplayer-theme-color: #659EB9; 
-    --aplayer-bg-color: rgba(255, 255, 255, 0.85); 
-    --aplayer-text-color: #333;
-    --aplayer-list-hover-bg: rgba(0, 0, 0, 0.05);
+<style>
+  .elegant-player-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 9999;
   }
 
-  /* ==============================
-     1. 播放器外部容器及状态控制 (修正)
-     ============================== */
-  .aplayer.aplayer-fixed {
-    z-index: 9999 !important; 
-    bottom: 25px !important; 
-    left: auto !important; 
-    right: 25px !important; 
-    width: 300px !important; /* 默认设为展开时的宽度 */
-    border-radius: 12px !important; 
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; 
-    backdrop-filter: blur(10px); 
-    overflow: hidden; 
-    transition: all 0.3s ease !important; 
+  #music-player {
+    height: 60px;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    /* 移除 overflow: hidden，以便内部弹出的音量条能渲染在这个胶囊之外 */
+    display: flex;
+    align-items: center;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    will-change: width;
   }
 
-  /* 真正的收起状态 (APlayer 会自动加上 aplayer-narrow 类) */
-  .aplayer.aplayer-fixed.aplayer-narrow {
-    width: 60px !important; /* 收缩时只剩下封面的宽度 */
-    border-radius: 50% !important; /* 强制变成圆形 */
+  /* 主题黑暗模式无缝衔接 */
+  :global(.dark) #music-player, :global([data-theme="dark"]) #music-player {
+    background: rgba(30, 30, 30, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
-  /* ==============================
-     2. 内部布局翻转 (解决向右重叠溢出的核心)
-     ============================== */
-  /* 使用 flex 并左右翻转：封面在右，信息栏自然向左延展 */
-  .aplayer.aplayer-fixed .aplayer-body {
-    display: flex !important;
-    flex-direction: row-reverse !important; 
-    background: var(--aplayer-bg-color) !important;
-    width: 100% !important;
+  #music-player.collapsed {
+    width: 60px;
   }
 
-  /* 封面保持圆形不变 */
-  .aplayer.aplayer-fixed .aplayer-pic {
-    width: 60px !important;
-    height: 60px !important;
-    border-radius: 50% !important;
-    flex-shrink: 0; /* 防止被挤压 */
+  /* 加宽展开状态以容纳更多按钮 */
+  #music-player.expanded {
+    width: 320px;
   }
 
-  /* 修正播放/暂停按钮的位置 */
-  .aplayer.aplayer-fixed .aplayer-pic .aplayer-button {
-    bottom: 50% !important;
-    right: 50% !important;
-    transform: translate(50%, 50%) !important; 
-    width: 26px !important;
-    height: 26px !important;
-    opacity: 0.8;
+  .player-inner {
+    display: flex;
+    align-items: center;
+    width: 320px;
+    padding: 6px;
+    box-sizing: border-box;
   }
 
-  /* ==============================
-     3. 歌名/进度条区域样式
-     ============================== */
-  .aplayer.aplayer-fixed .aplayer-info {
-    flex: 1; /* 撑满左侧多出来的空间 */
-    margin: 0 !important; /* 移除原版为左侧展开留的边距 */
-    padding: 10px 15px !important;
-    border-bottom: none !important;
-    box-sizing: border-box !important;
+  .cover-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    position: relative;
+    z-index: 2;
   }
 
-  /* 在收起状态下，隐藏文字和工具栏 */
-  .aplayer.aplayer-fixed.aplayer-narrow .aplayer-info {
-    display: none !important;
+  /* 黑胶唱片 */
+  .vinyl-record {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation: spin 8s linear infinite;
+    animation-play-state: paused;
   }
 
-  .aplayer .aplayer-info .aplayer-music {
-    margin: 0 0 8px 0 !important;
+  .vinyl-record::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.05); /* 模拟内环纹理 */
+    pointer-events: none;
   }
 
-  .aplayer .aplayer-info .aplayer-music .aplayer-title {
-    font-size: 14px !important;
-    font-weight: bold !important;
-    color: var(--aplayer-text-color) !important;
+  .cover-image {
+    width: 65%;
+    height: 65%;
+    border-radius: 50%;
+    object-fit: cover;
+    pointer-events: none;
   }
 
-  .aplayer .aplayer-info .aplayer-controller .aplayer-bar-wrap .aplayer-bar {
-    height: 4px !important;
-    border-radius: 2px !important;
+  .vinyl-hole {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    pointer-events: none;
+  }
+  :global(.dark) .vinyl-hole, :global([data-theme="dark"]) .vinyl-hole {
+    background: rgba(30,30,30, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
-  /* ==============================
-     4. 展开开关 (小箭头) 位置修正
-     ============================== */
-  /* 原版的开关在右侧，此时在右下角会被挤出屏幕。将其移到最左侧 */
-  .aplayer.aplayer-fixed .aplayer-miniswitch {
-    right: auto !important;
-    left: 0 !important;
-    background: rgba(30, 112, 145, 0.1) !important;
-    border-radius: 12px 0 0 12px !important;
+  @keyframes spin {
+    100% { transform: rotate(360deg); }
   }
 
-  .aplayer.aplayer-fixed.aplayer-narrow .aplayer-miniswitch {
-    border-radius: 50px 0 0 50px !important;
-    width: 18px !important;
+  /* 文本区域 */
+  .track-info-wrapper {
+    margin-left: 12px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    overflow: hidden;
+    pointer-events: none;
   }
 
-  /* 翻转箭头的方向以符合左侧开关的视觉直觉 */
-  .aplayer.aplayer-fixed .aplayer-miniswitch .aplayer-icon {
-    transform: rotateY(180deg) !important;
-  }
-  .aplayer.aplayer-fixed.aplayer-narrow .aplayer-miniswitch .aplayer-icon {
-    transform: rotateY(0deg) !important;
-  }
-
-  /* ==============================
-     5. 播放列表及其他样式 
-     ============================== */
-  .aplayer .aplayer-list {
-    max-height: 200px !important; 
-    border-radius: 0 0 12px 12px !important; 
-    background: var(--aplayer-bg-color) !important;
+  #music-player.expanded .track-info-wrapper {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.1s;
+    pointer-events: auto;
   }
 
-  .aplayer .aplayer-listol {
-    padding: 5px 0 !important;
+  .song-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  :global(.dark) .song-title, :global([data-theme="dark"]) .song-title {
+    color: #f3f4f6;
   }
 
-  .aplayer .aplayer-list li {
-    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
-    padding: 10px 15px !important;
-    transition: background 0.2s;
+  .artist-name {
+    font-size: 11px;
+    color: #6b7280;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  :global(.dark) .artist-name, :global([data-theme="dark"]) .artist-name {
+    color: #9ca3af;
   }
 
-  .aplayer .aplayer-list li:hover {
-    background: var(--aplayer-list-hover-bg) !important;
+  /* ==== 进度条 hitbox & container ==== */
+  .progress-hitbox {
+    width: 100%;
+    padding: 6px 0; /* 扩大上下点击热区，不改变视觉高度 */
+    margin-top: 2px;
+    cursor: pointer;
+    position: relative;
+    /* 取消 pointer-events:none，允许其内部子元素被点击，且响应在自己身上 */
   }
 
-  .aplayer .aplayer-list li.aplayer-list-light {
-    background: rgba(101, 158, 185, 0.1) !important; 
+  .progress-container {
+    width: 100%;
+    height: 3px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: height 0.2s ease;
+    pointer-events: none; /* 让点击穿透给 hitbox 处理坐标计算最准确 */
+  }
+  
+  .progress-hitbox:hover .progress-container {
+    height: 5px; /* Hover交互微增强 */
+  }
+  
+  :global(.dark) .progress-container, :global([data-theme="dark"]) .progress-container {
+    background: rgba(255,255,255,0.15);
   }
 
-  .aplayer .aplayer-list li.aplayer-list-light .aplayer-list-cur {
-    display: none !important; 
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #1a1a1a;
+    border-radius: 2px;
+    transition: width 0.1s linear;
+    pointer-events: none;
+  }
+  
+  :global(.dark) .progress-bar, :global([data-theme="dark"]) .progress-bar {
+    background: #f3f4f6;
   }
 
-  .aplayer .aplayer-list li .aplayer-list-index {
-    color: #999 !important;
-    margin-right: 8px !important;
+  /* 控制区域 */
+  .controls-wrapper {
+    margin-left: 8px;
+    margin-right: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px; /* 间距 */
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
   }
 
-  .aplayer .aplayer-list li .aplayer-list-title {
-    color: var(--aplayer-text-color) !important;
+  #music-player.expanded .controls-wrapper {
+    opacity: 1;
+    transform: scale(1);
+    transition-delay: 0.15s;
+    pointer-events: auto;
   }
 
-  /* ==============================
-     6. 歌词与暗色模式适配 
-     ============================== */
-  html.dark :root {
-    --aplayer-bg-color: rgba(30, 30, 30, 0.85);
-    --aplayer-text-color: #eee;
-    --aplayer-list-hover-bg: rgba(255, 255, 255, 0.05);
+  /* 基础控制按钮通用样式 */
+  .ctrl-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    border-radius: 50%;
+    transition: background 0.2s ease, transform 0.1s ease, color 0.2s ease;
+  }
+  .ctrl-btn:hover {
+    background: rgba(0,0,0,0.06);
+  }
+  .ctrl-btn:active {
+    transform: scale(0.9);
   }
 
-  .aplayer.aplayer-fixed .aplayer-lrc {
-    bottom: 80px !important; 
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important; 
+  :global(.dark) .ctrl-btn, :global([data-theme="dark"]) .ctrl-btn { color: #d1d5db; }
+  :global(.dark) .ctrl-btn:hover, :global([data-theme="dark"]) .ctrl-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  .icon-small {
+    width: 28px;
+    height: 28px;
+  }
+  .icon-small svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
   }
 
-  .aplayer .aplayer-lrc:before,
-  .aplayer .aplayer-lrc:after {
-    display: none !important; 
+  /* 播放主按钮 */
+  .play-pause-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    background: rgba(0,0,0,0.04);
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .play-pause-btn:hover { background: rgba(0,0,0,0.08); }
+  .play-pause-btn:active { transform: scale(0.9); }
+  
+  :global(.dark) .play-pause-btn, :global([data-theme="dark"]) .play-pause-btn {
+    color: #f3f4f6;
+    background: rgba(255,255,255,0.08);
+  }
+  :global(.dark) .play-pause-btn:hover, :global([data-theme="dark"]) .play-pause-btn:hover {
+    background: rgba(255,255,255,0.15);
+  }
+  .play-pause-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
   }
 
-  .aplayer .aplayer-lrc p {
-    font-size: 15px !important; 
-    color: #888 !important; 
-    line-height: 2 !important; 
-    transition: all 0.3s ease !important; 
+  /* 音量 Hover Slider */
+  .volume-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 延长区域触发防抖伪类 */
   }
 
-  .aplayer .aplayer-lrc p.aplayer-lrc-current {
-    font-size: 18px !important; 
-    color: var(--aplayer-theme-color) !important; 
-    font-weight: bold !important;
-    letter-spacing: 1px !important; 
-  } /* <-- 帮你补上了原代码缺失的闭合大括号 */
+  .volume-slider-wrapper {
+    position: absolute;
+    bottom: 110%; /* 浮动在上方 */
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    padding: 8px 6px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.2s;
+    z-index: 100;
+  }
+  :global(.dark) .volume-slider-wrapper, :global([data-theme="dark"]) .volume-slider-wrapper {
+    background: rgba(30,30,30,0.8);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .volume-group:hover .volume-slider-wrapper {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* 美化纵向滑块 */
+  .volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 60px;
+    height: 3px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 2px;
+    outline: none;
+    /* 旋转使其竖直 */
+    transform: rotate(-90deg);
+    transform-origin: center;
+    cursor: pointer;
+  }
+  :global(.dark) .volume-slider, :global([data-theme="dark"]) .volume-slider {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  :global(.dark) .volume-slider::-webkit-slider-thumb {
+    background: #fff;
+  }
 </style>
