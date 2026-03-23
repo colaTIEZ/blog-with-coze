@@ -29,11 +29,13 @@ const myCustomPlaylist = [
 interface Props {
   meta: SiteMeta
   highlightColor?: string
+  backgroundImage?: string
 }
 
 const {
   meta: { articleDate, description = config.description, ogImage, title },
   highlightColor,
+  backgroundImage,
   ...props
 } = Astro.props
 ---
@@ -45,6 +47,16 @@ const {
   </head>
 
   <body class='flex justify-center bg-background text-foreground' {...props}>
+    {
+      backgroundImage && (
+        <div class='pointer-events-none fixed inset-0 z-[-1]'>
+          <div
+            class='absolute inset-0 bg-cover bg-center opacity-10 dark:opacity-5 blur-sm grayscale'
+            style={`background-image: url('${backgroundImage}'); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);`}
+          />
+        </div>
+      )
+    }
     {
       highlightColor && (
         <div
