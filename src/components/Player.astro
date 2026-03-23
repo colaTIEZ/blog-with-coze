@@ -140,40 +140,36 @@
       audio.volume = lastVolume;
 
       // 播放/暂停
-      playBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
+      playBtn?.addEventListener('click', () => {
         if (audio.paused) {
-          audio.play();
+          audio.play().catch(console.error);
         } else {
           audio.pause();
         }
       });
 
       // 上一首
-      prevBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
+      prevBtn?.addEventListener('click', () => {
         this.currentTrackIndex = (this.currentTrackIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
         loadTrack(this.currentTrackIndex);
-        audio.play();
+        audio.play().catch(console.error);
       });
 
       // 下一首 (及自动连播)
       const playNext = () => {
         this.currentTrackIndex = (this.currentTrackIndex + 1) % PLAYLIST.length;
         loadTrack(this.currentTrackIndex);
-        audio.play();
+        audio.play().catch(console.error);
       };
 
-      nextBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
+      nextBtn?.addEventListener('click', () => {
         playNext();
       });
 
       audio.addEventListener('ended', playNext);
 
       // 音量控制及静音
-      muteBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
+      muteBtn?.addEventListener('click', () => {
         if (audio.volume > 0) {
           lastVolume = audio.volume;
           audio.volume = 0;
@@ -186,7 +182,6 @@
       });
 
       volSlider?.addEventListener('input', (e) => {
-        e.stopPropagation();
         const v = parseFloat((e.target as HTMLInputElement).value);
         audio.volume = v;
         if (v > 0) lastVolume = v;
@@ -225,7 +220,6 @@
       // === 修复点击进度条未响应问题 ===
       // 使用更外围带有 padding 的 hitbox 容器来响应点击，获取更精确和无阻挡的坐标
       progressHitbox?.addEventListener('click', (e) => {
-        e.stopPropagation(); // 阻止冒泡
         if (!audio.duration) return; 
         
         const rect = progressContainer!.getBoundingClientRect();
@@ -237,11 +231,7 @@
         audio.currentTime = pos * audio.duration;
       });
       
-      // 防止误触面板影响折叠状态
-      const trackInfo = this.querySelector('.track-info-wrapper');
-      trackInfo?.addEventListener('click', (e) => e.stopPropagation());
-      const controlsWrap = this.querySelector('.controls-wrapper');
-      controlsWrap?.addEventListener('click', (e) => e.stopPropagation());
+      // 防止误触面板影响折叠状态 (不再需要 stopPropagation，因为 coverContainer 并不是它们的父级)
     }
   }
 
@@ -252,7 +242,7 @@
   .elegant-player-container {
     position: fixed;
     bottom: 2rem;
-    right: 2rem;
+    left: 2rem;
     z-index: 9999;
   }
 
