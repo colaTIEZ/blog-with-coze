@@ -1,0 +1,579 @@
+---
+// Coze Agent Chat Component - Modal Version
+// 使用 Coze WebSDK 实现点击按钮打开聊天窗口
+
+interface Props {
+  projectId?: string;
+  className?: string;
+}
+
+const {
+  projectId = import.meta.env.PUBLIC_COZE_PROJECT_ID || '',
+  className = ''
+} = Astro.props;
+---
+
+<div id="coze-chat-widget" class={className}>
+  <!-- 聊天触发按钮 -->
+  <button 
+    id="coze-chat-toggle"
+    class="coze-chat-button"
+    aria-label="打开 AI 助手"
+    title="点击与 AI 助手交互"
+  >
+    <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span class="pulse"></span>
+  </button>
+
+  <!-- 聊天窗口容器 (iframe 方式) -->
+  <div id="coze-chat-container" class="coze-chat-modal hidden">
+    <div class="coze-chat-header">
+      <h2>AI 助手</h2>
+      <button 
+        id="coze-chat-close"
+        class="close-button"
+        aria-label="关闭聊天"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <!-- iframe 会由 JS 动态创建 -->
+    <div id="coze-embed-container" class="coze-chat-body"></div>
+  </div>
+
+  <!-- 背景遮罩 -->
+  <div id="coze-chat-backdrop" class="coze-chat-backdrop hidden"></div>
+</div>
+
+<style>
+  #coze-chat-widget {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 40;
+  }
+
+  /* 聊天按钮 */
+  .coze-chat-button {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    z-index: 41;
+  }
+
+  /* 当 BackToTop 按钮存在时，调整 AI 按钮位置以避免重叠 */
+  :global(body:has([role="button"]:is([aria-label*="Back"]), [class*="back-to-top"], [class*="scroll-to-top"])) .coze-chat-button {
+    bottom: 24px;
+    right: 96px;
+  }
+
+  /* 备选方案：通过兄弟选择器检测 BackToTop 的存在 */
+  #coze-chat-widget:has(~ [class*="back-to-top"]) .coze-chat-button,
+  [class*="back-to-top"]:not(:hidden) ~ #coze-chat-widget .coze-chat-button {
+    right: 96px;
+  }
+
+  .coze-chat-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .coze-chat-button:active {
+    transform: scale(0.95);
+  }
+
+  .chat-icon {
+    width: 28px;
+    height: 28px;
+    pointer-events: none;
+  }
+
+  /* 呼吸动画 */
+  .pulse {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid hsl(var(--primary));
+    animation: pulse-animation 2s infinite;
+  }
+
+  @keyframes pulse-animation {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 0;
+    }
+  }
+
+  /* 聊天窗口背景遮罩 */
+  .coze-chat-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 39;
+    pointer-events: auto;
+    transition: opacity 0.3s ease;
+  }
+
+  .coze-chat-backdrop.hidden {
+    display: none;
+  }
+
+  /* 聊天窗口模态框 */
+  .coze-chat-modal {
+    position: fixed;
+    bottom: 100px;
+    right: 24px;
+    width: 90vw;
+    max-width: 420px;
+    height: 600px;
+    max-height: 80vh;
+    border-radius: 12px;
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--foreground) / 0.1);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 40;
+    pointer-events: auto;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .coze-chat-modal.hidden {
+    display: none;
+    pointer-events: none;
+  }
+
+  .coze-chat-modal.show {
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 聊天窗口头部 */
+  .coze-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid hsl(var(--foreground) / 0.1);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.05) 0%, transparent 100%);
+  }
+
+  .coze-chat-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  /* 关闭按钮 */
+  .close-button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: hsl(var(--foreground));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+  }
+
+  .close-button:hover {
+    background: hsl(var(--foreground) / 0.1);
+  }
+
+  .close-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* 聊天内容区 */
+  .coze-chat-body {
+    flex: 1;
+    overflow: hidden;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Coze SDK 容器 - iframe 需要明确的尺寸和无边距 */
+  #coze-embed-container {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  #coze-embed-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* 移动设备适配 */
+  @media (max-width: 640px) {
+    .coze-chat-button {
+      bottom: 16px;
+      right: 16px;
+      width: 48px;
+      height: 48px;
+    }
+
+    /* 移动端有 BackToTop 时的位置调整 */
+    :global(body:has([role="button"]:is([aria-label*="Back"]), [class*="back-to-top"], [class*="scroll-to-top"])) .coze-chat-button {
+      right: 72px;
+    }
+
+    .chat-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .pulse {
+      width: 48px;
+      height: 48px;
+    }
+
+    .coze-chat-modal {
+      bottom: 80px;
+      right: 16px;
+      left: 16px;
+      width: auto;
+      max-width: none;
+      height: 500px;
+    }
+  }
+
+  /* 深色模式支持 */
+  :global(.dark) .coze-chat-button {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.7) 100%);
+  }
+
+  :global(.dark) .coze-chat-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+  }
+</style>
+
+<script define:vars={{ projectId }}>
+  class CozeChatWidget {
+    constructor() {
+      this.projectId = projectId || '';
+      this.container = document.getElementById('coze-embed-container');
+      this.modal = document.getElementById('coze-chat-container');
+      this.backdrop = document.getElementById('coze-chat-backdrop');
+      this.toggleBtn = document.getElementById('coze-chat-toggle');
+      this.closeBtn = document.getElementById('coze-chat-close');
+      this.iframe = null;
+      this.isOpen = false;
+      this.iframeReady = false;
+      
+      // 绑定方法以便能够移除监听器
+      this.handleToggle = () => this.toggle();
+      this.handleClose = () => this.close();
+      this.handleBackdropClick = () => this.close();
+      this.handleMessageEvent = (event) => this._handleMessage(event);
+      
+      this.init();
+    }
+
+    init() {
+      this.toggleBtn?.addEventListener('click', this.handleToggle);
+      this.closeBtn?.addEventListener('click', this.handleClose);
+      this.backdrop?.addEventListener('click', this.handleBackdropClick);
+
+      // 首次打开时创建 iframe
+      const createIframeOnce = () => {
+        if (!this.iframe) {
+          this.createIframe();
+        }
+        // 移除一次性监听器
+        this.toggleBtn?.removeEventListener('click', createIframeOnce);
+      };
+      this.toggleBtn?.addEventListener('click', createIframeOnce, { once: true });
+    }
+
+    /**
+     * 清理资源（导航前调用）
+     */
+    cleanup() {
+      // 移除所有事件监听器
+      this.toggleBtn?.removeEventListener('click', this.handleToggle);
+      this.closeBtn?.removeEventListener('click', this.handleClose);
+      this.backdrop?.removeEventListener('click', this.handleBackdropClick);
+      window.removeEventListener('message', this.handleMessageEvent);
+      
+      // 关闭模态框
+      this.close();
+    }
+
+    /**
+     * 销毁实例（重新初始化前调用）
+     */
+    destroy() {
+      this.cleanup();
+      
+      // 清除 iframe
+      if (this.iframe) {
+        this.iframe.remove();
+        this.iframe = null;
+      }
+      
+      // 清除容器内容
+      if (this.container) {
+        this.container.innerHTML = '';
+      }
+      
+      this.iframeReady = false;
+      this.isOpen = false;
+    }
+
+    /**
+     * 创建并初始化 iframe
+     */
+    createIframe() {
+      if (this.iframe) return;
+
+      if (!this.projectId) {
+        this.showError('缺少 Coze Project ID 配置');
+        return;
+      }
+
+      try {
+        // 创建 iframe 元素
+        this.iframe = document.createElement('iframe');
+        this.iframe.src = 'https://sdk.coze.site';
+        this.iframe.style.width = '100%';
+        this.iframe.style.height = '100%';
+        this.iframe.style.border = 'none';
+        this.iframe.style.display = 'block';
+
+        // 监听来自 iframe 的消息
+        window.addEventListener('message', this.handleMessageEvent);
+
+        // 添加到容器
+        this.container?.appendChild(this.iframe);
+
+        // 等待 iframe 准备就绪
+        setTimeout(() => {
+          if (!this.iframeReady) {
+            this.showError('iframe 加载超时，请检查网络连接');
+          }
+        }, 5000);
+      } catch (error) {
+        console.error('Failed to create iframe:', error);
+        this.showError('AI 助手初始化出错');
+      }
+    }
+
+    /**
+     * 处理来自 iframe 的消息
+     */
+    _handleMessage(event) {
+      // 只处理来自 Coze SDK 的消息
+      if (event.origin !== 'https://sdk.coze.site') {
+        return;
+      }
+
+      const data = event.data;
+      
+      if (data.type === 'IFRAME_READY') {
+        this.iframeReady = true;
+        this.initializeIframe();
+      } else if (data.type === 'TOKEN_EXPIRED') {
+        // Token 过期，需要刷新
+        this.refreshTokenAndNotify();
+      } else if (data.type === 'TOKEN_INVALID') {
+        this.showError('Token 校验失败，请检查配置');
+      } else if (data.type === 'NETWORK_ERROR') {
+        this.showError('网络错误，请检查连接');
+      }
+    }
+
+    /**
+     * 初始化 iframe（发送初始化命令）
+     */
+    async initializeIframe() {
+      try {
+        // 获取 token
+        const token = await this.getToken();
+        
+        if (!token) {
+          this.showError('无法获取访问令牌');
+          return;
+        }
+
+        // 发送初始化命令
+        this.iframe?.contentWindow?.postMessage({
+          type: 'INIT',
+          payload: {
+            projectId: this.projectId,
+            token: token
+          }
+        }, 'https://sdk.coze.site');
+      } catch (error) {
+        console.error('Failed to initialize iframe:', error);
+        this.showError('AI 助手初始化出错');
+      }
+    }
+
+    /**
+     * 获取 token
+     */
+    async getToken() {
+      try {
+        const response = await fetch('/api/coze/token', {
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch token');
+        }
+
+        const data = await response.json();
+        return data.token;
+      } catch (error) {
+        console.error('Failed to get token:', error);
+        return null;
+      }
+    }
+
+    /**
+     * 刷新 token 并通知 iframe
+     */
+    async refreshTokenAndNotify() {
+      const token = await this.getToken();
+      if (token) {
+        this.iframe?.contentWindow?.postMessage({
+          type: 'UPDATE_TOKEN',
+          payload: { token }
+        }, 'https://sdk.coze.site');
+      }
+    }
+
+    /**
+     * 打开聊天窗口
+     */
+    open() {
+      if (this.isOpen) return;
+      
+      this.isOpen = true;
+      this.modal?.classList.remove('hidden');
+      this.modal?.classList.add('show');
+      this.backdrop?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * 关闭聊天窗口
+     */
+    close() {
+      if (!this.isOpen) return;
+      
+      this.isOpen = false;
+      this.modal?.classList.add('hidden');
+      this.backdrop?.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    /**
+     * 切换聊天窗口
+     */
+    toggle() {
+      this.isOpen ? this.close() : this.open();
+    }
+
+    /**
+     * 显示错误信息
+     */
+    showError(message) {
+      if (!this.container) return;
+      this.container.innerHTML = `
+        <div style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          text-align: center;
+          padding: 20px;
+          color: hsl(var(--foreground) / 0.6);
+          font-size: 14px;
+        ">
+          <div>
+            <p style="margin: 0;">⚠️ ${message}</p>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // 全局实例引用
+  let chatWidget = null;
+
+  /**
+   * 初始化聊天小部件
+   */
+  function initializeChatWidget() {
+    // 清理旧实例（防止重复初始化）
+    if (chatWidget) {
+      chatWidget.destroy?.();
+    }
+    chatWidget = new CozeChatWidget();
+  }
+
+  // 初始页面加载
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeChatWidget);
+  } else {
+    initializeChatWidget();
+  }
+
+  // 支持 Astro View Transitions（处理 SPA 导航）
+  document.addEventListener('astro:after-swap', () => {
+    // 重新初始化聊天小部件以获取新的 DOM 元素
+    initializeChatWidget();
+  });
+
+  // 导航前清理（可选但推荐）
+  document.addEventListener('astro:before-swap', () => {
+    if (chatWidget?.cleanup) {
+      chatWidget.cleanup();
+    }
+  });
+</script>
